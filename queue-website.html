@@ -539,9 +539,26 @@
 
     .footer {
       text-align: center;
-      padding: 24px 0 12px;
+      padding: 24px 0 20px;
       color: var(--text-muted);
       font-size: 12px;
+    }
+    .footer-credit {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .footer-credit a {
+      color: var(--accent-blue);
+      text-decoration: none;
+    }
+    .footer-credit a:hover { text-decoration: underline; }
+    .footer-tagline {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+      opacity: 0.9;
     }
 
     .refresh-btn {
@@ -862,6 +879,8 @@
           </button>
           <p>อัปเดตล่าสุด: ${new Date(d.timestamp).toLocaleString('th-TH')}</p>
           <p style="margin-top:4px">Auto-refresh ทุก 30 วินาที</p>
+          <p class="footer-credit">© 2026 directed by <a href="mailto:Uradev222@gmail.com">Uradev</a></p>
+          <p class="footer-tagline">สร้างด้วยใจ เพื่อแผนกอายุรกรรม รักและสามัคคีกัน</p>
         </div>`;
 
       content.innerHTML = html;
