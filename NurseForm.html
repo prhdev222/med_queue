@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>กรอก Case กลาง</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-card: #1e293b;
+      --bg-input: #0f172a;
+      --border: #334155;
+      --border-focus: #3b82f6;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --cyan: #06b6d4;
+      --violet: #8b5cf6;
+      --text: #f1f5f9;
+      --text-sub: #94a3b8;
+      --text-muted: #64748b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans Thai', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 0%, rgba(59,130,246,0.08), transparent 60%),
+        radial-gradient(ellipse at 70% 100%, rgba(6,182,212,0.06), transparent 60%);
+      pointer-events: none;
+    }
+
+    .page { width: 100%; max-width: 520px; padding: 20px; position: relative; z-index: 1; }
+
+    /* ===== LOGIN SCREEN ===== */
+    #loginScreen {
+      text-align: center;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .login-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 20px rgba(59,130,246,0.3));
+    }
+
+    .login-title {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #f1f5f9, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .login-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px 24px;
+    }
+
+    .input-group { margin-bottom: 16px; text-align: left; }
+
+    .input-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-bottom: 6px;
+    }
+
+    .input-group input, .input-group select, .input-group textarea {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--bg-input);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    }
+
+    .input-group select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+    }
+
+    .input-group select option {
+      background: var(--bg-card);
+      color: var(--text);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    .btn-success {
+      background: var(--emerald);
+      color: white;
+    }
+    .btn-success:hover { background: #059669; }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-sub);
+      border: 1.5px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .error-msg {
+      color: var(--rose);
+      font-size: 13px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .error-msg.show { display: block; animation: shake 0.4s ease; }
+
+    /* ===== FORM SCREEN ===== */
+    #formScreen { display: none; animation: fadeIn 0.5s ease; }
+
+    .form-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .form-header h2 {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 100px;
+      font-size: 12px;
+      color: var(--emerald);
+    }
+
+    .user-badge .dot {
+      width: 7px; height: 7px;
+      background: var(--emerald);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .form-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .next-queue-preview {
+      background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(6,182,212,0.08));
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .next-queue-preview .label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .next-queue-preview .doctor-name {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--cyan);
+      margin: 6px 0;
+      text-shadow: 0 0 20px rgba(6,182,212,0.3);
+    }
+
+    .queue-mini {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    .queue-mini-item {
+      padding: 4px 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .queue-mini-item.active {
+      background: rgba(59,130,246,0.15);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ===== SUCCESS SCREEN ===== */
+    #successScreen { display: none; animation: fadeIn 0.5s ease; }
+
+    .success-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(16,185,129,0.3);
+      border-radius: 16px;
+      padding: 36px 24px;
+      text-align: center;
+    }
+
+    .success-icon {
+      font-size: 64px;
+      margin-bottom: 12px;
+    }
+
+    .success-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--emerald);
+      margin-bottom: 6px;
+    }
+
+    .result-box {
+      background: var(--bg);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      text-align: left;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .result-row:last-child { border-bottom: none; }
+
+    .result-row .label { color: var(--text-muted); font-size: 13px; }
+    .result-row .value { font-weight: 600; font-size: 14px; }
+
+    .result-row .value.highlight {
+      color: var(--cyan);
+      font-size: 16px;
+    }
+
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2.5px solid rgba(255,255,255,0.2);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    .btn.loading .spinner { display: inline-block; }
+    .btn.loading .btn-text { display: none; }
+
+    .recent-list { margin-top: 12px; }
+
+    .recent-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 10px;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .recent-item .qi {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      min-width: 28px;
+    }
+
+    .recent-item .info { flex: 1; }
+    .recent-item .doc {
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 100px;
+      font-size: 12px;
+    }
+
+    .dc0 { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .dc1 { background: rgba(6,182,212,0.15); color: var(--cyan); }
+    .dc2 { background: rgba(16,185,129,0.15); color: var(--emerald); }
+    .dc3 { background: rgba(245,158,11,0.15); color: var(--amber); }
+    .dc4 { background: rgba(139,92,246,0.15); color: var(--violet); }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 480px) {
+      .page { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <div id="loginScreen">
+      <div class="login-icon">🏥</div>
+      <div class="login-title">ระบบกรอก Case กลาง</div>
+      <div class="login-sub">สำหรับพยาบาลเวร — กรุณาใส่รหัสเข้าใช้งาน</div>
+      <div class="login-card">
+        <div class="input-group">
+          <label>🔐 รหัสผ่าน</label>
+          <input type="password" id="passwordInput" placeholder="ใส่รหัสผ่านที่ได้รับ"
+                 onkeypress="if(event.key==='Enter')doLogin()" autofocus />
+        </div>
+        <button class="btn btn-primary" onclick="doLogin()" id="loginBtn">
+          <span class="btn-text">เข้าสู่ระบบ</span>
+          <div class="spinner"></div>
+        </button>
+        <div class="error-msg" id="loginError">❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่</div>
+      </div>
+    </div>
+
+    <div id="formScreen">
+      <div class="form-header">
+        <h2>📝 กรอก Case กลาง</h2>
+        <div class="user-badge">
+          <span class="dot"></span>
+          <span id="nurseNameBadge">พยาบาล</span>
+        </div>
+      </div>
+
+      <div class="next-queue-preview" id="queuePreview">
+        <div class="label">🔔 คิวถัดไป</div>
+        <div class="doctor-name" id="previewDoctor">กำลังโหลด...</div>
+        <div class="queue-mini" id="previewQueue" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="form-card">
+        <div class="input-group">
+          <label>HN (Hospital Number) *</label>
+          <input type="text" id="hnInput" placeholder="เช่น 6801234" inputmode="numeric" />
+        </div>
+        <div class="input-group">
+          <label>การวินิจฉัย (Diagnosis)</label>
+          <input type="text" id="diagInput" placeholder="เช่น Pneumonia, CHF, AKI" />
+        </div>
+        <div class="input-group">
+          <label>Ward *</label>
+          <select id="wardSelect" onchange="toggleOtherWard()">
+            <option value="">-- เลือก Ward --</option>
+            <option value="MED1">MED1</option>
+            <option value="MED2">MED2</option>
+            <option value="IMC">IMC</option>
+            <option value="WARD90">WARD90</option>
+            <option value="OTHER">อื่นๆ (กรอกเอง)</option>
+          </select>
+          <input type="text" id="wardOther" placeholder="พิมพ์ชื่อ Ward..." style="display:none; margin-top:8px;" />
+        </div>
+        <div class="input-group">
+          <label>หมายเหตุ (ถ้ามี)</label>
+          <input type="text" id="noteInput" placeholder="ข้อมูลเพิ่มเติม" />
+        </div>
+
+        <button class="btn btn-success" onclick="submitCase()" id="submitBtn" style="margin-top:8px">
+          <span class="btn-text">✅ บันทึก Case</span>
+          <div class="spinner"></div>
+        </button>
+        <div class="error-msg" id="formError"></div>
+      </div>
+
+      <div class="form-card" style="padding: 16px;">
+        <div style="font-size:13px; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">
+          📋 Case ล่าสุด
+        </div>
+        <div class="recent-list" id="recentList">
+          <div style="color:var(--text-muted); font-size:13px; text-align:center; padding:12px;">กำลังโหลด...</div>
+        </div>
+      </div>
+
+      <button class="btn btn-outline" onclick="doLogout()" style="margin-top:8px; font-size:14px;">
+        🚪 ออกจากระบบ
+      </button>
+    </div>
+
+    <div id="successScreen">
+      <div class="success-card">
+        <div class="success-icon">✅</div>
+        <div class="success-title">บันทึก Case สำเร็จ!</div>
+        <div class="result-box" id="resultBox"></div>
+        <button class="btn btn-primary" onclick="backToForm()" style="margin-top:8px">
+          <span class="btn-text">📝 กรอก Case ถัดไป</span>
+        </button>
+        <button class="btn btn-outline" onclick="backToForm()" style="margin-top:8px; font-size:14px;">
+          ดูคิวปัจจุบัน
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // เมื่อเปิดจาก file:// (ดับเบิลคลิก) ใช้ URL เต็มของ Apps Script โดยตรง เพื่อไม่ให้ fetch ไปที่ file:///api/queue
+    var SCRIPT_URL = (typeof window !== 'undefined' && window.QUEUE_SCRIPT_URL) ? window.QUEUE_SCRIPT_URL
+      : (window.location.protocol === 'file:' ? 'https://script.google.com/macros/s/AKfycby3FjnO6lg0tJT21_Fk1DuTU_p8xutVVexCMa1T6eAHFoQLx_A6GDPcGL750Ta8ctcZ/exec' : '/api/queue');
+
+    let sessionToken = '';
+    let doctorsList = [];
+
+    function toggleOtherWard() {
+      const sel = document.getElementById('wardSelect');
+      const other = document.getElementById('wardOther');
+      if (sel.value === 'OTHER') {
+        other.style.display = 'block';
+        other.focus();
+      } else {
+        other.style.display = 'none';
+        other.value = '';
+      }
+    }
+
+    function getWardValue() {
+      const sel = document.getElementById('wardSelect').value;
+      if (sel === 'OTHER') {
+        return document.getElementById('wardOther').value.trim() || 'OTHER';
+      }
+      return sel;
+    }
+
+    function showScreen(id) {
+      ['loginScreen', 'formScreen', 'successScreen'].forEach(s => {
+        document.getElementById(s).style.display = s === id ? 'block' : 'none';
+      });
+      if (id === 'formScreen') document.getElementById('hnInput').focus();
+    }
+
+    async function doLogin() {
+      const pw = document.getElementById('passwordInput').value.trim();
+      if (!pw) return;
+
+      const btn = document.getElementById('loginBtn');
+      btn.classList.add('loading');
+      btn.disabled = true;
+      document.getElementById('loginError').classList.remove('show');
+
+      try {
+        const resp = await callAPI('login', { password: pw });
+
+        if (resp.success) {
+          sessionToken = resp.token;
+          doctorsList = resp.doctors || [];
+          if (resp.nurseName) {
+            document.getElementById('nurseNameBadge').textContent = resp.nurseName;
+          }
+          showScreen('formScreen');
+          loadQueuePreview();
+        } else {
+          document.getElementById('loginError').classList.add('show');
+        }
+      } catch (e) {
+        document.getElementById('loginError').textContent = '❌ เชื่อมต่อไม่ได้ กรุณาลองใหม่';
+        document.getElementById('loginError').classList.add('show');
+      }
+
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+
+    function doLogout() {
+      sessionToken = '';
+      document.getElementById('passwordInput').value = '';
+      showScreen('loginScreen');
+    }
+
+    async function loadQueuePreview() {
+      try {
+        const data = await callAPI('status', {});
+
+        document.getElementById('previewDoctor').textContent = data.nextDoctor || '-';
+
+        const queueHtml = (data.upcomingQueue || []).map((q, i) =>
+          `<div class="queue-mini-item ${i === 0 ? 'active' : ''}">${i === 0 ? '▶ ' : ''}${q.doctor}</div>`
+        ).join('<span style="color:var(--text-muted);font-size:16px;display:flex;align-items:center;">→</span>');
+        document.getElementById('previewQueue').innerHTML = queueHtml;
+
+        const recentHtml = (data.recentCases || []).slice(0, 5).map((c, i) => {
+          const ci = (data.doctorStats || []).findIndex(d => d.name === c.doctor);
+          return `<div class="recent-item">
+            <span class="qi">#${c.queueNumber}</span>
+            <span class="info">${c.hn} · ${c.ward || '-'}</span>
+            <span class="doc dc${ci >= 0 ? ci % 5 : 0}">${c.doctor}</span>
+          </div>`;
+        }).join('');
+        document.getElementById('recentList').innerHTML = recentHtml || '<div style="color:var(--text-muted);text-align:center;padding:12px;font-size:13px;">ยังไม่มี Case</div>';
+
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function submitCase() {
+      const hn = document.getElementById('hnInput').value.trim();
+      const diag = document.getElementById('diagInput').value.trim();
+      const ward = getWardValue();
+      const note = document.getElementById('noteInput').value.trim();
+      const errEl = document.getElementById('formError');
+
+      if (!hn) {
+        errEl.textContent = '❌ กรุณากรอก HN';
+        errEl.classList.add('show');
+        return;
+      }
+
+      if (!ward) {
+        errEl.textContent = '❌ กรุณาเลือก Ward';
+        errEl.classList.add('show');
+        return;
+      }
+
+      errEl.classList.remove('show');
+      const btn = document.getElementById('submitBtn');
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        const resp = await callAPI('submit', { hn, diagnosis: diag, ward, note });
+
+        if (resp.success) {
+          const resultHtml = `
+            <div class="result-row">
+              <span class="label">HN</span>
+              <span class="value">${resp.hn || hn}</span>
+            </div>
+            <div class="result-row">
+              <span class="label">วินิจฉัย</span>
+              <span class="value">${diag || '-'}</span>
+            </div>
+            <div class="result-row">
+              <span class="label">Ward</span>
+              <span class="value">${ward || '-'}</span>
+            </div>
+            <div class="result-row">
+              <span class="label">แพทย์รับ Case</span>
+              <span class="value highlight">${resp.doctor || '-'}</span>
+            </div>
+            <div class="result-row">
+              <span class="label">ลำดับคิว</span>
+              <span class="value">#${resp.queueNumber || '-'}</span>
+            </div>
+          `;
+          document.getElementById('resultBox').innerHTML = resultHtml;
+          showScreen('successScreen');
+
+          document.getElementById('hnInput').value = '';
+          document.getElementById('diagInput').value = '';
+          document.getElementById('wardSelect').value = '';
+          document.getElementById('wardOther').value = '';
+          document.getElementById('wardOther').style.display = 'none';
+          document.getElementById('noteInput').value = '';
+        } else {
+          errEl.textContent = `❌ ${resp.error || 'เกิดข้อผิดพลาด'}`;
+          errEl.classList.add('show');
+        }
+      } catch (e) {
+        errEl.textContent = '❌ เชื่อมต่อไม่ได้ กรุณาลองใหม่';
+        errEl.classList.add('show');
+      }
+
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+
+    function backToForm() {
+      showScreen('formScreen');
+      loadQueuePreview();
+    }
+
+    async function callAPI(action, data) {
+      const payload = {
+        action: action,
+        token: sessionToken,
+        ...data
+      };
+
+      if (typeof google !== 'undefined' && google.script) {
+        return new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .handleFormRequest(JSON.stringify(payload));
+        });
+      }
+
+      const base = SCRIPT_URL.startsWith('http') ? SCRIPT_URL : (window.location.origin + (SCRIPT_URL.startsWith('/') ? SCRIPT_URL : '/' + SCRIPT_URL));
+      const url = new URL(base);
+      url.searchParams.set('page', 'api');
+      url.searchParams.set('payload', JSON.stringify(payload));
+
+      const resp = await fetch(url.toString());
+      return await resp.json();
+    }
+  </script>
+</body>
+</html>

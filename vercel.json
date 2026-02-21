@@ -1,0 +1,5 @@
+{
+  "buildCommand": "node scripts/inject-api.js",
+  "outputDirectory": "dist",
+  "framework": null
+}

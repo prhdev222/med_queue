@@ -1,0 +1,12 @@
+# Env (ไม่ push รหัส/URL จริง)
+.env
+.env.local
+.env.*.local
+
+# Build
+node_modules/
+dist/
+
+# OS
+.DS_Store
+Thumbs.db

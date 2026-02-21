@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบคิวรับ Case กลาง</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-card: #111827;
+      --bg-card-hover: #1a2332;
+      --border: #1e293b;
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-violet: #8b5cf6;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --glow-blue: rgba(59, 130, 246, 0.15);
+      --glow-cyan: rgba(6, 182, 212, 0.15);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans Thai', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated gradient background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: 
+        radial-gradient(ellipse at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(139, 92, 246, 0.04) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ===== HEADER ===== */
+    .header {
+      text-align: center;
+      margin-bottom: 36px;
+      animation: fadeInDown 0.6s ease;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 100px;
+      font-size: 12px;
+      color: var(--accent-blue);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .header-badge .pulse-dot {
+      width: 8px; height: 8px;
+      background: var(--accent-emerald);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .header h1 {
+      font-size: clamp(28px, 5vw, 42px);
+      font-weight: 800;
+      background: linear-gradient(135deg, #f1f5f9, #3b82f6, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 15px;
+      margin-top: 8px;
+    }
+
+    /* ===== NEXT DOCTOR HERO ===== */
+    .next-doctor-hero {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(6, 182, 212, 0.08));
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 20px;
+      padding: 32px;
+      text-align: center;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+      animation: fadeInUp 0.5s ease 0.1s both;
+    }
+
+    .next-doctor-hero::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: conic-gradient(from 0deg, transparent, rgba(59, 130, 246, 0.05), transparent, rgba(6, 182, 212, 0.05), transparent);
+      animation: slowRotate 20s linear infinite;
+    }
+
+    .next-doctor-hero > * { position: relative; z-index: 1; }
+
+    .next-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .next-name {
+      font-size: clamp(36px, 8vw, 56px);
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .next-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 100px;
+      color: var(--accent-emerald);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* ===== UPCOMING QUEUE ===== */
+    .upcoming-section {
+      margin-bottom: 28px;
+      animation: fadeInUp 0.5s ease 0.2s both;
+    }
+
+    .section-title {
+      font-size: 14px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, var(--border), transparent);
+    }
+
+    .queue-track {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      scroll-snap-type: x mandatory;
+    }
+
+    .queue-track::-webkit-scrollbar { height: 4px; }
+    .queue-track::-webkit-scrollbar-track { background: var(--bg-card); border-radius: 4px; }
+    .queue-track::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    .queue-card {
+      flex: 0 0 auto;
+      min-width: 140px;
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      text-align: center;
+      scroll-snap-align: start;
+      transition: all 0.3s ease;
+    }
+
+    .queue-card:hover {
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .queue-card.is-next {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(6, 182, 212, 0.1));
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .queue-pos {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .queue-doc-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .queue-card.is-next .queue-doc-name { color: var(--accent-cyan); }
+
+    /* ===== STATS GRID ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+      animation: fadeInUp 0.5s ease 0.3s both;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      border-color: rgba(59, 130, 246, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .stat-card .doc-name {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .case-count {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 32px;
+      font-weight: 600;
+      line-height: 1;
+    }
+
+    .stat-card .case-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .stat-card .bar-track {
+      height: 4px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 4px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+
+    .stat-card .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.8s ease;
+    }
+
+    /* Doctor colors */
+    .doc-color-0 .case-count { color: var(--accent-blue); }
+    .doc-color-0 .bar-fill { background: var(--accent-blue); }
+    .doc-color-1 .case-count { color: var(--accent-cyan); }
+    .doc-color-1 .bar-fill { background: var(--accent-cyan); }
+    .doc-color-2 .case-count { color: var(--accent-emerald); }
+    .doc-color-2 .bar-fill { background: var(--accent-emerald); }
+    .doc-color-3 .case-count { color: var(--accent-amber); }
+    .doc-color-3 .bar-fill { background: var(--accent-amber); }
+    .doc-color-4 .case-count { color: var(--accent-violet); }
+    .doc-color-4 .bar-fill { background: var(--accent-violet); }
+
+    /* ===== SEARCH BAR ===== */
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      animation: fadeInUp 0.5s ease 0.35s both;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 14px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-input:focus { border-color: var(--accent-blue); }
+
+    .search-btn {
+      padding: 14px 24px;
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .search-btn:hover { background: #2563eb; transform: translateY(-1px); }
+    .search-btn:active { transform: translateY(0); }
+
+    /* ===== RECENT CASES TABLE ===== */
+    .cases-section {
+      animation: fadeInUp 0.5s ease 0.4s both;
+    }
+
+    .cases-table {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .cases-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .cases-table thead th {
+      padding: 14px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      text-align: left;
+      background: rgba(255,255,255,0.02);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cases-table tbody td {
+      padding: 12px 16px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: var(--text-secondary);
+    }
+
+    .cases-table tbody tr:last-child td { border-bottom: none; }
+
+    .cases-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+    .cases-table .hn-cell {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .cases-table .doctor-chip {
+      display: inline-flex;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .chip-0 { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+    .chip-1 { background: rgba(6,182,212,0.15); color: var(--accent-cyan); }
+    .chip-2 { background: rgba(16,185,129,0.15); color: var(--accent-emerald); }
+    .chip-3 { background: rgba(245,158,11,0.15); color: var(--accent-amber); }
+    .chip-4 { background: rgba(139,92,246,0.15); color: var(--accent-violet); }
+
+    /* ===== SEARCH RESULTS ===== */
+    .search-results {
+      background: var(--bg-card);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .search-results h3 {
+      font-size: 16px;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
+    }
+
+    .search-result-item {
+      padding: 12px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+
+    .search-result-item:last-child { margin-bottom: 0; }
+
+    /* ===== CONFIG PANEL ===== */
+    .config-panel {
+      margin-bottom: 28px;
+      animation: fadeInUp 0.5s ease 0.05s both;
+    }
+
+    .config-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-secondary);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .config-toggle:hover { border-color: var(--accent-blue); color: var(--text-primary); }
+
+    .config-form {
+      margin-top: 12px;
+      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .config-form label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .config-form input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    .config-form input:focus { border-color: var(--accent-blue); }
+
+    .config-save {
+      padding: 10px 20px;
+      background: var(--accent-emerald);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* ===== NURSE BUTTON (ตรงกลาง ตัวใหญ่ สีชัด) ===== */
+    .nurse-section {
+      text-align: center;
+      margin: 28px 0 32px;
+    }
+    .nurse-link {
+      display: inline-block;
+      padding: 20px 48px;
+      font-size: 20px;
+      background: linear-gradient(135deg, var(--accent-emerald), #059669);
+      border: none;
+      border-radius: 16px;
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .nurse-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(16, 185, 129, 0.45);
+    }
+
+    /* ===== 2 CASE ล่าสุด (ไม่แสดง HN) ===== */
+    .recent-two-section {
+      margin-top: 24px;
+      padding: 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .recent-two-section .section-title { margin-bottom: 14px; }
+    .recent-two-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px 20px;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .recent-two-item:last-child { border-bottom: none; }
+    .recent-two-item .time { color: var(--text-muted); white-space: nowrap; font-size: 13px; }
+    .recent-two-item .diag-ward { color: var(--text-primary); }
+    .recent-two-item .doctor-chip { padding: 4px 12px; border-radius: 100px; font-weight: 600; font-size: 13px; }
+
+    /* ===== FOOTER ===== */
+
+    .footer {
+      text-align: center;
+      padding: 24px 0 12px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .refresh-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-family: 'Noto Sans Thai', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 8px;
+    }
+
+    .refresh-btn:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+    .refresh-btn.spinning svg { animation: spin 0.8s ease; }
+
+    /* ===== LOADING ===== */
+    .loading-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 0;
+      gap: 16px;
+    }
+
+    .loading-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    /* ===== DEMO BANNER ===== */
+    .demo-banner {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 12px;
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--accent-amber);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .container { padding: 16px 12px; }
+      .next-doctor-hero { padding: 24px 16px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .cases-table { overflow-x: auto; }
+      .cases-table table { min-width: 600px; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .stat-card { padding: 14px; }
+      .stat-card .case-count { font-size: 26px; }
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes slowRotate {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="app">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-badge">
+        <span class="pulse-dot"></span>
+        <span>LIVE QUEUE</span>
+      </div>
+      <h1>🏥 ระบบคิวรับ Case กลาง</h1>
+      <p>ติดตามคิวแพทย์เวรรับ Case กลาง แบบ Real-time</p>
+    </div>
+
+    <!-- Content loaded by JS -->
+    <div id="content"></div>
+  </div>
+
+  <script>
+    window.QUEUE_DEFAULT_API = '';
+    const HAS_ENV_API = !!(window.QUEUE_DEFAULT_API && window.QUEUE_DEFAULT_API.trim());
+    // ===== STATE =====
+    let API_URL = localStorage.getItem('queue_api_url') || window.QUEUE_DEFAULT_API || '';
+    let INTERNAL_TOKEN = localStorage.getItem('queue_token') || '';
+    let isInternalMode = false;
+    let currentData = null;
+    let isLoading = false;
+    let autoRefreshInterval = null;
+
+    // ===== DEMO DATA =====
+    const DEMO_DATA = {
+      timestamp: new Date().toISOString(),
+      totalCases: 23,
+      nextDoctor: "นพ.ธนา",
+      upcomingQueue: [
+        { position: 1, doctor: "นพ.ธนา" },
+        { position: 2, doctor: "พญ.มณี" },
+        { position: 3, doctor: "พญ.สมศรี" },
+        { position: 4, doctor: "นพ.วิชัย" },
+        { position: 5, doctor: "พญ.นภา" }
+      ],
+      doctorStats: [
+        { name: "พญ.สมศรี", caseCount: 5, order: 1 },
+        { name: "นพ.วิชัย", caseCount: 5, order: 2 },
+        { name: "พญ.นภา", caseCount: 5, order: 3 },
+        { name: "นพ.ธนา", caseCount: 4, order: 4 },
+        { name: "พญ.มณี", caseCount: 4, order: 5 }
+      ],
+      recentCases: [
+        { timestamp: "21/02/2026 09:45", hn: "6801234", diagnosis: "Pneumonia", ward: "Med1", doctor: "พญ.นภา", queueNumber: 23 },
+        { timestamp: "21/02/2026 09:30", hn: "6805678", diagnosis: "CHF exacerbation", ward: "CCU", doctor: "นพ.วิชัย", queueNumber: 22 },
+        { timestamp: "21/02/2026 09:15", hn: "6809012", diagnosis: "AKI", ward: "Med2", doctor: "พญ.สมศรี", queueNumber: 21 },
+        { timestamp: "21/02/2026 08:50", hn: "6803456", diagnosis: "DKA", ward: "Med1", doctor: "พญ.มณี", queueNumber: 20 },
+        { timestamp: "21/02/2026 08:30", hn: "6807890", diagnosis: "Stroke", ward: "Neuro", doctor: "นพ.ธนา", queueNumber: 19 }
+      ]
+    };
+
+    // ===== API FUNCTIONS =====
+    async function fetchData(action = 'status', params = {}) {
+      if (!API_URL) {
+        return DEMO_DATA;
+      }
+
+      const base = API_URL.startsWith('http') ? API_URL : (window.location.origin + (API_URL.startsWith('/') ? API_URL : '/' + API_URL));
+      const url = new URL(base);
+      url.searchParams.set('action', action);
+      if (isInternalMode && INTERNAL_TOKEN) {
+        url.searchParams.set('mode', 'internal');
+        url.searchParams.set('token', INTERNAL_TOKEN);
+      }
+      Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+
+      try {
+        const resp = await fetch(url.toString());
+        return await resp.json();
+      } catch (err) {
+        console.error('API Error:', err);
+        return null;
+      }
+    }
+
+    async function loadData() {
+      isLoading = true;
+      render();
+      
+      const data = await fetchData('status');
+      if (data) {
+        currentData = data;
+      }
+      isLoading = false;
+      render();
+    }
+
+    // ===== CONFIG =====
+    function toggleConfig() {
+      const form = document.getElementById('configForm');
+      form.style.display = form.style.display === 'none' ? 'block' : 'none';
+      const input = document.getElementById('apiUrl');
+      if (input) input.value = API_URL;
+      const tokenInput = document.getElementById('tokenInput');
+      if (tokenInput) tokenInput.value = INTERNAL_TOKEN;
+    }
+
+    function saveConfig() {
+      const token = document.getElementById('tokenInput')?.value?.trim() || '';
+      let url = document.getElementById('apiUrl').value.trim();
+      if (HAS_ENV_API && !url) url = API_URL || window.QUEUE_DEFAULT_API || '';
+      API_URL = url;
+      INTERNAL_TOKEN = token;
+      isInternalMode = !!token;
+      localStorage.setItem('queue_api_url', url);
+      localStorage.setItem('queue_token', token);
+      document.getElementById('configForm').style.display = 'none';
+      loadData();
+    }
+
+    // ===== GET DOCTOR COLOR INDEX =====
+    function getDocColorIndex(doctorName, stats) {
+      if (!stats) return 0;
+      const idx = stats.findIndex(d => d.name === doctorName);
+      return idx >= 0 ? idx % 5 : 0;
+    }
+
+    // ===== PDPA: บดบัง HN ในโหมดสาธารณะ (แสดงเฉพาะ 3 หลักท้าย เช่น ****234)
+    function displayHN(hn) {
+      if (isInternalMode || !API_URL) return hn || '-';
+      if (!hn || typeof hn !== 'string') return '-';
+      const s = String(hn).trim();
+      if (s.length <= 3) return '****';
+      return '****' + s.slice(-3);
+    }
+
+    // ===== RENDER =====
+    function render() {
+      const content = document.getElementById('content');
+      
+      if (isLoading && !currentData) {
+        content.innerHTML = `
+          <div class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p style="color:var(--text-muted)">กำลังโหลดข้อมูล...</p>
+          </div>`;
+        return;
+      }
+
+      if (!currentData) {
+        content.innerHTML = `
+          <div class="loading-overlay">
+            <p style="color:var(--text-muted); font-size:18px;">⚠️ ไม่สามารถโหลดข้อมูลได้</p>
+            <p style="color:var(--text-muted);">กรุณาตรวจสอบ Apps Script URL</p>
+          </div>`;
+        return;
+      }
+
+      const d = currentData;
+      const isDemo = !API_URL;
+      let html = '';
+
+      // Demo banner
+      if (isDemo) {
+        html += `
+          <div class="demo-banner">
+            ⚡ <span>กำลังแสดงข้อมูลตัวอย่าง (Demo Mode) — กดตั้งค่าด้านบนเพื่อเชื่อมต่อ Google Sheet จริง</span>
+          </div>`;
+      }
+
+      // Next Doctor Hero
+      html += `
+        <div class="next-doctor-hero">
+          <div class="next-label">คิวถัดไป — Case กลาง</div>
+          <div class="next-name">${d.nextDoctor || '-'}</div>
+          <div class="next-badge">
+            <span class="pulse-dot" style="width:8px;height:8px;background:var(--accent-emerald);border-radius:50%;animation:pulse 2s infinite;"></span>
+            พร้อมรับ Case ถัดไป
+          </div>
+        </div>`;
+
+      // Upcoming Queue
+      html += `
+        <div class="upcoming-section">
+          <div class="section-title">📋 ลำดับคิวรับ Case</div>
+          <div class="queue-track">
+            ${d.upcomingQueue.map((q, i) => `
+              ${i > 0 ? '<div style="display:flex;align-items:center;color:var(--text-muted);font-size:20px;padding:0 4px;">→</div>' : ''}
+              <div class="queue-card ${i === 0 ? 'is-next' : ''}">
+                <div class="queue-pos">${i === 0 ? '▶ ถัดไป' : '#' + q.position}</div>
+                <div class="queue-doc-name">${q.doctor}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+
+      // ปุ่มกรอก Case กลาง — ตรงกลาง ตัวใหญ่ สีชัด
+      html += `
+        <div class="nurse-section">
+          <a href="NurseForm.html" class="nurse-link" target="_blank" rel="noopener">
+            📝 กรอกรายละเอียด Case กลาง
+          </a>
+        </div>`;
+
+      // 2 Case ล่าสุด — วัน/เวลา, diagnosis, ward, แพทย์ที่รับ (ไม่แสดง HN)
+      const recentTwo = (d.recentCases || []).slice(0, 2);
+      html += `
+        <div class="recent-two-section">
+          <div class="section-title">📋 Case ล่าสุด (2 รายการ)</div>
+          ${recentTwo.length === 0
+            ? '<p style="color:var(--text-muted);font-size:14px;text-align:center;padding:12px 0;">ยังไม่มี Case</p>'
+            : recentTwo.map(c => `
+              <div class="recent-two-item">
+                <span class="time">${c.timestamp || '-'}</span>
+                <span class="diag-ward">${c.diagnosis || '-'} ${c.ward ? '· ' + c.ward : ''}</span>
+                <span class="doctor-chip chip-${getDocColorIndex(c.doctor, d.doctorStats)}">${c.doctor || '-'}</span>
+              </div>
+            `).join('')
+          }
+        </div>`;
+
+      // Refresh & Footer
+      html += `
+        <div class="footer">
+          <button class="refresh-btn" id="refreshBtn" onclick="doRefresh()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 4v6h6M23 20v-6h-6"/>
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+            </svg>
+            รีเฟรช
+          </button>
+          <p>อัปเดตล่าสุด: ${new Date(d.timestamp).toLocaleString('th-TH')}</p>
+          <p style="margin-top:4px">Auto-refresh ทุก 30 วินาที</p>
+        </div>`;
+
+      content.innerHTML = html;
+    }
+
+    function doRefresh() {
+      const btn = document.getElementById('refreshBtn');
+      if (btn) btn.classList.add('spinning');
+      loadData().then(() => {
+        setTimeout(() => {
+          const btn2 = document.getElementById('refreshBtn');
+          if (btn2) btn2.classList.remove('spinning');
+        }, 800);
+      });
+    }
+
+    // ===== INIT =====
+    isInternalMode = !!INTERNAL_TOKEN;
+    loadData();
+
+    // Auto refresh every 30 seconds
+    autoRefreshInterval = setInterval(() => {
+      loadData();
+    }, 30000);
+  </script>
+</body>
+</html>
