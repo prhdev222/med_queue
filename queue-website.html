@@ -878,7 +878,7 @@
             รีเฟรช
           </button>
           <p>อัปเดตล่าสุด: ${new Date(d.timestamp).toLocaleString('th-TH')}</p>
-          <p style="margin-top:4px">Auto-refresh ทุก 30 วินาที</p>
+          <p style="margin-top:4px">Auto-refresh ทุก 2 นาที</p>
           <p class="footer-credit">© 2026 directed by <a href="mailto:Uradev222@gmail.com">Uradev</a></p>
           <p class="footer-tagline">สร้างด้วยใจ เพื่อแผนกอายุรกรรม รักและสามัคคีกัน</p>
         </div>`;
@@ -904,7 +904,7 @@
     // Auto refresh every 30 seconds
     autoRefreshInterval = setInterval(() => {
       loadData();
-    }, 30000);
+    }, 120000);
   </script>
 </body>
 </html>
