@@ -30,6 +30,15 @@ console.log('Written:', outFile);
 const nurseFormSrc = path.join(__dirname, '..', 'NurseForm.html');
 const nurseFormOut = path.join(outDir, 'NurseForm.html');
 if (fs.existsSync(nurseFormSrc)) {
-  fs.copyFileSync(nurseFormSrc, nurseFormOut);
+  let nurseHtml = fs.readFileSync(nurseFormSrc, 'utf8');
+  if (envUrl) {
+    // inject API URL ให้ NurseForm ใช้ proxy เหมือน queue-website
+    nurseHtml = nurseHtml.replace(
+      /var SCRIPT_URL = .+?;/,
+      "var SCRIPT_URL = '/api/queue';"
+    );
+    console.log('Injected NurseForm API: /api/queue (proxy)');
+  }
+  fs.writeFileSync(nurseFormOut, nurseHtml);
   console.log('Written:', nurseFormOut);
 }

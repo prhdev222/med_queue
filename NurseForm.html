@@ -412,6 +412,43 @@
         <div class="label">🔔 คิวถัดไป</div>
         <div class="doctor-name" id="previewDoctor">กำลังโหลด...</div>
         <div class="queue-mini" id="previewQueue" style="margin-top:14px;"></div>
+        <div id="passedDoctorsInfo" style="display:none;"></div>
+        <div id="quickPassArea" style="margin-top:16px;"></div>
+      </div>
+
+      <!-- ===== Pass Management Section ===== -->
+      <div class="form-card" id="passManageSection">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="togglePassPanel()">
+          <div style="font-size:13px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:6px;">
+            ⏭️ จัดการ Pass แพทย์ <span id="passBadge"></span>
+          </div>
+          <span id="passToggleIcon" style="color:var(--text-muted);font-size:14px;transition:transform 0.2s;">▼</span>
+        </div>
+
+        <div id="passPanel" style="display:none;margin-top:16px;">
+          <!-- รายชื่อแพทย์ที่ถูก Pass -->
+          <div id="passedDoctorsList" style="margin-bottom:14px;"></div>
+
+          <!-- ฟอร์ม Pass แพทย์ -->
+          <div style="border-top:1px solid var(--border);padding-top:14px;">
+            <div style="font-size:13px;font-weight:600;color:var(--text-sub);margin-bottom:10px;">⏭️ Pass แพทย์</div>
+            <div class="input-group">
+              <label>เลือกแพทย์</label>
+              <select id="passDoctorSelect">
+                <option value="">-- เลือกแพทย์ --</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>เหตุผลที่ Pass *</label>
+              <input type="text" id="passReasonInput" placeholder="เช่น มาสาย, ติดผ่าตัด, ไม่สบาย" />
+            </div>
+            <button class="btn" style="background:var(--amber);color:#000;font-size:14px;padding:12px;" onclick="doPassDoctor()" id="passBtn">
+              <span class="btn-text">⏭️ Pass แพทย์นี้</span>
+              <div class="spinner" style="border-top-color:#000;"></div>
+            </button>
+          </div>
+          <div class="error-msg" id="passError"></div>
+        </div>
       </div>
 
       <div class="form-card">
@@ -561,6 +598,24 @@
         ).join('<span style="color:var(--text-muted);font-size:16px;display:flex;align-items:center;">→</span>');
         document.getElementById('previewQueue').innerHTML = queueHtml;
 
+        // Passed Doctors Info (in queue preview)
+        const passedEl = document.getElementById('passedDoctorsInfo');
+        if (data.passedDoctors && data.passedDoctors.length > 0) {
+          const passedNames = data.passedDoctors.map(p =>
+            `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:rgba(244,63,94,0.15);border:1px solid rgba(244,63,94,0.25);border-radius:100px;font-size:12px;font-weight:600;color:#f43f5e;">⏸️ ${p.name}</span>`
+          ).join(' ');
+          passedEl.innerHTML = `<div style="margin-top:12px;padding:10px 14px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;font-size:12px;color:#f59e0b;">⏭️ <strong>Pass อยู่:</strong> ${passedNames}<div style="margin-top:4px;color:var(--text-muted);font-size:11px;">แพทย์เหล่านี้ถูกข้ามชั่วคราว — จัดการได้ด้านล่าง</div></div>`;
+          passedEl.style.display = 'block';
+        } else {
+          passedEl.style.display = 'none';
+        }
+
+        // Quick Pass Button
+        renderQuickPass(data.nextDoctor);
+
+        // Pass Management Section
+        renderPassSection(data);
+
         const recentHtml = (data.recentCases || []).slice(0, 5).map((c, i) => {
           const ci = (data.doctorStats || []).findIndex(d => d.name === c.doctor);
           return `<div class="recent-item">
@@ -574,6 +629,209 @@
       } catch (e) {
         console.error(e);
       }
+    }
+
+    // ===== Quick Pass (ปุ่มลัด Pass คิวถัดไป) =====
+
+    var currentNextDoctor = '';
+
+    function renderQuickPass(nextDoctor) {
+      currentNextDoctor = nextDoctor || '';
+      var el = document.getElementById('quickPassArea');
+      if (!nextDoctor) { el.innerHTML = ''; return; }
+
+      el.innerHTML =
+        '<div id="quickPassBtn">' +
+          '<button onclick="showQuickPassForm()" style="width:100%;padding:10px 16px;background:rgba(245,158,11,0.12);border:1.5px solid rgba(245,158,11,0.3);border-radius:10px;color:var(--amber);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;">' +
+            '⏭️ Pass ' + nextDoctor + ' ไปก่อน' +
+          '</button>' +
+        '</div>' +
+        '<div id="quickPassForm" style="display:none;margin-top:8px;">' +
+          '<div style="display:flex;gap:6px;align-items:center;">' +
+            '<input type="text" id="quickPassReason" placeholder="เหตุผล เช่น มาสาย, ติดงาน" style="flex:1;padding:10px 12px;background:var(--bg-input);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;outline:none;" onkeypress="if(event.key===\'Enter\')doQuickPass()" />' +
+            '<button id="quickPassSubmitBtn" onclick="doQuickPass()" style="padding:10px 16px;background:var(--amber);border:none;border-radius:8px;color:#000;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;display:flex;align-items:center;gap:6px;">' +
+              '<span class="btn-text">⏭️ Pass</span><div class="spinner" style="border-top-color:#000;"></div>' +
+            '</button>' +
+            '<button onclick="cancelQuickPass()" style="padding:10px 12px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-size:14px;cursor:pointer;font-family:inherit;">✖</button>' +
+          '</div>' +
+          '<div id="quickPassError" style="color:var(--rose);font-size:12px;margin-top:6px;display:none;"></div>' +
+        '</div>';
+    }
+
+    function showQuickPassForm() {
+      document.getElementById('quickPassBtn').style.display = 'none';
+      document.getElementById('quickPassForm').style.display = 'block';
+      document.getElementById('quickPassReason').focus();
+    }
+
+    function cancelQuickPass() {
+      document.getElementById('quickPassBtn').style.display = 'block';
+      document.getElementById('quickPassForm').style.display = 'none';
+      document.getElementById('quickPassReason').value = '';
+    }
+
+    async function doQuickPass() {
+      var reason = document.getElementById('quickPassReason').value.trim();
+      var errEl = document.getElementById('quickPassError');
+      if (!reason) {
+        errEl.textContent = '❌ กรุณากรอกเหตุผล';
+        errEl.style.display = 'block';
+        document.getElementById('quickPassReason').style.borderColor = 'var(--rose)';
+        return;
+      }
+      errEl.style.display = 'none';
+
+      var btn = document.getElementById('quickPassSubmitBtn');
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        var resp = await callAPI('pass', { doctor: currentNextDoctor, reason: reason });
+        if (resp.success) {
+          document.getElementById('quickPassReason').value = '';
+          loadQueuePreview();
+        } else {
+          errEl.textContent = '❌ ' + (resp.error || 'เกิดข้อผิดพลาด');
+          errEl.style.display = 'block';
+        }
+      } catch (e) {
+        errEl.textContent = '❌ เชื่อมต่อไม่ได้ กรุณาลองใหม่';
+        errEl.style.display = 'block';
+      }
+
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+
+    // ===== Pass Management Functions =====
+
+    function togglePassPanel() {
+      const panel = document.getElementById('passPanel');
+      const icon = document.getElementById('passToggleIcon');
+      if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+        icon.textContent = '▲';
+      } else {
+        panel.style.display = 'none';
+        icon.textContent = '▼';
+      }
+    }
+
+    function safeId(name) {
+      return name.replace(/[^a-zA-Z0-9\u0E00-\u0E7F]/g, '');
+    }
+
+    function renderPassSection(data) {
+      const activeDoctors = (data.doctorStats || []).map(d => d.name);
+      const passed = data.passedDoctors || [];
+
+      // Badge
+      const badge = document.getElementById('passBadge');
+      if (passed.length > 0) {
+        badge.innerHTML = '<span style="color:var(--rose);font-weight:700;font-size:12px;">(' + passed.length + ' คน)</span>';
+      } else {
+        badge.innerHTML = '';
+      }
+
+      // Dropdown — เฉพาะแพทย์ Active
+      const select = document.getElementById('passDoctorSelect');
+      select.innerHTML = '<option value="">-- เลือกแพทย์ --</option>' +
+        activeDoctors.map(function(n) { return '<option value="' + n + '">' + n + '</option>'; }).join('');
+
+      // Passed Doctors List
+      const listEl = document.getElementById('passedDoctorsList');
+      if (passed.length > 0) {
+        listEl.innerHTML =
+          '<div style="font-size:12px;color:var(--rose);font-weight:600;margin-bottom:8px;">🔴 แพทย์ที่ถูก Pass อยู่:</div>' +
+          passed.map(function(p) {
+            var sid = safeId(p.name);
+            return '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px;background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.15);border-radius:10px;margin-bottom:8px;">' +
+              '<span style="font-weight:600;font-size:14px;">⏸️ ' + p.name + '</span>' +
+              '<div id="returnAction-' + sid + '">' +
+                '<button onclick="showReturnForm(\'' + p.name + '\')" style="padding:8px 16px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);border-radius:8px;color:var(--emerald);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s;">↩️ ดึงกลับเข้าคิว</button>' +
+              '</div>' +
+            '</div>';
+          }).join('');
+      } else {
+        listEl.innerHTML = '<div style="text-align:center;padding:10px;color:var(--emerald);font-size:13px;">✅ ไม่มีแพทย์ที่ถูก Pass อยู่ตอนนี้</div>';
+      }
+    }
+
+    function showReturnForm(doctorName) {
+      var sid = safeId(doctorName);
+      var el = document.getElementById('returnAction-' + sid);
+      el.innerHTML =
+        '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px;">' +
+          '<input type="text" id="returnReason-' + sid + '" placeholder="เหตุผลกลับเข้าคิว" style="flex:1;min-width:120px;padding:8px 12px;background:var(--bg-input);border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-family:inherit;font-size:13px;outline:none;" onkeypress="if(event.key===\'Enter\')confirmReturn(\'' + doctorName + '\')" />' +
+          '<button id="returnBtn-' + sid + '" onclick="confirmReturn(\'' + doctorName + '\')" style="padding:8px 14px;background:var(--emerald);border:none;border-radius:8px;color:white;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;">' +
+            '<span class="btn-text">✅ ยืนยัน</span><div class="spinner"></div>' +
+          '</button>' +
+          '<button onclick="loadQueuePreview()" style="padding:8px 12px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-size:13px;cursor:pointer;font-family:inherit;">✖</button>' +
+        '</div>';
+      var input = document.getElementById('returnReason-' + sid);
+      if (input) input.focus();
+    }
+
+    async function confirmReturn(doctorName) {
+      var sid = safeId(doctorName);
+      var reasonInput = document.getElementById('returnReason-' + sid);
+      var reason = (reasonInput ? reasonInput.value : '').trim() || 'พร้อมกลับเข้าคิว';
+
+      var btn = document.getElementById('returnBtn-' + sid);
+      if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+
+      try {
+        var resp = await callAPI('return', { doctor: doctorName, reason: reason });
+        if (resp.success) {
+          loadQueuePreview();
+        } else {
+          alert('❌ ' + (resp.error || 'เกิดข้อผิดพลาด'));
+        }
+      } catch (e) {
+        alert('❌ เชื่อมต่อไม่ได้ กรุณาลองใหม่');
+      }
+
+      if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+    }
+
+    async function doPassDoctor() {
+      var doctor = document.getElementById('passDoctorSelect').value;
+      var reason = document.getElementById('passReasonInput').value.trim();
+      var errEl = document.getElementById('passError');
+
+      if (!doctor) {
+        errEl.textContent = '❌ กรุณาเลือกแพทย์';
+        errEl.classList.add('show');
+        return;
+      }
+      if (!reason) {
+        errEl.textContent = '❌ กรุณากรอกเหตุผล';
+        errEl.classList.add('show');
+        return;
+      }
+
+      errEl.classList.remove('show');
+      var btn = document.getElementById('passBtn');
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      try {
+        var resp = await callAPI('pass', { doctor: doctor, reason: reason });
+        if (resp.success) {
+          document.getElementById('passDoctorSelect').value = '';
+          document.getElementById('passReasonInput').value = '';
+          loadQueuePreview();
+        } else {
+          errEl.textContent = '❌ ' + (resp.error || 'เกิดข้อผิดพลาด');
+          errEl.classList.add('show');
+        }
+      } catch (e) {
+        errEl.textContent = '❌ เชื่อมต่อไม่ได้ กรุณาลองใหม่';
+        errEl.classList.add('show');
+      }
+
+      btn.classList.remove('loading');
+      btn.disabled = false;
     }
 
     async function submitCase() {

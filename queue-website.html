@@ -704,7 +704,8 @@
         { timestamp: "21/02/2026 09:15", hn: "6809012", diagnosis: "AKI", ward: "Med2", doctor: "พญ.สมศรี", queueNumber: 21 },
         { timestamp: "21/02/2026 08:50", hn: "6803456", diagnosis: "DKA", ward: "Med1", doctor: "พญ.มณี", queueNumber: 20 },
         { timestamp: "21/02/2026 08:30", hn: "6807890", diagnosis: "Stroke", ward: "Neuro", doctor: "นพ.ธนา", queueNumber: 19 }
-      ]
+      ],
+      passedDoctors: []
     };
 
     // ===== API FUNCTIONS =====
@@ -841,6 +842,25 @@
             `).join('')}
           </div>
         </div>`;
+
+      // Passed Doctors Banner
+      if (d.passedDoctors && d.passedDoctors.length > 0) {
+        html += `
+          <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:14px;padding:16px 20px;margin-bottom:24px;animation:fadeInUp 0.5s ease 0.25s both;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span style="font-size:20px;">⏭️</span>
+              <span style="font-size:14px;font-weight:700;color:var(--accent-amber);">แพทย์ที่ขอ Pass (ข้ามคิวชั่วคราว)</span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              ${d.passedDoctors.map(p => `
+                <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(244,63,94,0.12);border:1px solid rgba(244,63,94,0.25);border-radius:100px;font-size:13px;font-weight:600;color:var(--accent-rose);">
+                  ⏸️ ${p.name}
+                </span>
+              `).join('')}
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:8px;">แพทย์เหล่านี้จะถูกข้ามจนกว่าจะดึงกลับเข้าคิว</p>
+          </div>`;
+      }
 
       // ปุ่มกรอก Case กลาง — ตรงกลาง ตัวใหญ่ สีชัด
       html += `

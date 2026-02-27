@@ -5,6 +5,7 @@
 // ชื่อ Sheet
 const DOCTORS_SHEET = "Doctors";
 const CASES_SHEET = "Cases";
+const PASS_LOG_SHEET = "PassLog";
 
 // ============================================
 // 1) ฟังก์ชันตั้งค่าเริ่มต้น (รันครั้งเดียว)
@@ -40,6 +41,18 @@ function setupSheets() {
     caseSheet.setColumnWidth(4, 120);
     caseSheet.setColumnWidth(5, 160);
     caseSheet.setColumnWidth(6, 100);
+  }
+  
+  // สร้าง Sheet "PassLog" ถ้ายังไม่มี
+  let passLogSheet = ss.getSheetByName(PASS_LOG_SHEET);
+  if (!passLogSheet) {
+    passLogSheet = ss.insertSheet(PASS_LOG_SHEET);
+    passLogSheet.getRange("A1:D1").setValues([["Timestamp", "แพทย์", "Action", "เหตุผล"]]);
+    passLogSheet.getRange("A1:D1").setFontWeight("bold").setBackground("#FF9800").setFontColor("white");
+    passLogSheet.setColumnWidth(1, 180);
+    passLogSheet.setColumnWidth(2, 160);
+    passLogSheet.setColumnWidth(3, 120);
+    passLogSheet.setColumnWidth(4, 300);
   }
   
   // สร้าง Trigger สำหรับ onEdit (ลบตัวเก่าก่อน)
@@ -273,6 +286,12 @@ function doGet(e) {
         result = searchByHN(e.parameter.hn || "");
       }
       break;
+    case "passed":
+      result = getPassedDoctors();
+      break;
+    case "passHistory":
+      result = getPassHistory();
+      break;
     default:
       result = { error: "Unknown action" };
   }
@@ -314,6 +333,12 @@ function handleFormRequest(payloadJson) {
       return handleFormStatus(payload);
     case "submit":
       return handleSubmitCase(payload);
+    case "pass":
+      return handlePassDoctor(payload);
+    case "return":
+      return handleReturnDoctor(payload);
+    case "passStatus":
+      return handlePassStatus(payload);
     default:
       return { error: "Unknown action" };
   }
@@ -449,13 +474,16 @@ function getQueueStatus() {
   // Case ล่าสุด
   const recentCases = getRecentCases(5);
   
+  const passedDoctors = getPassedDoctors();
+  
   return {
     timestamp: new Date().toISOString(),
     totalCases: totalCases,
     nextDoctor: nextDoctor,
     upcomingQueue: upcomingQueue,
     doctorStats: doctorStats,
-    recentCases: recentCases
+    recentCases: recentCases,
+    passedDoctors: passedDoctors
   };
 }
 
@@ -559,6 +587,12 @@ function onOpen() {
     .addItem("⚙️ ตั้งค่าเริ่มต้น", "setupSheets")
     .addItem("📊 ดูสถานะคิว", "showQueueDialog")
     .addItem("🔗 ดู Link ฟอร์มพยาบาล", "showFormLink")
+    .addSeparator()
+    .addSubMenu(SpreadsheetApp.getUi().createMenu("⏭️ ระบบ Pass")
+      .addItem("⏭️ Pass แพทย์ (ข้ามคิวชั่วคราว)", "passDoctorFromMenu")
+      .addItem("↩️ ดึงแพทย์กลับเข้าคิว", "returnDoctorFromMenu")
+      .addItem("🔄 Pass Case เฉพาะเคส (เลือกแถวก่อน)", "passCaseFromMenu")
+      .addItem("📋 ดูสถานะ Pass / ประวัติ", "showPassStatusDialog"))
     .addSeparator()
     .addItem("🔐 ตั้งรหัสฟอร์มพยาบาล", "setFormPassword")
     .addItem("🔐 ตั้งรหัส Dashboard Token (PDPA)", "setInternalToken")
@@ -734,4 +768,340 @@ function manualAssign() {
   if (response.getSelectedButton() === ui.Button.OK) {
     sheet.getRange(row, 5).setValue(response.getResponseText());
   }
+}
+
+// ============================================
+// 17) ระบบ Pass — ข้ามคิวแพทย์ชั่วคราว
+// ============================================
+
+// บันทึก log การ Pass/Return ลง PassLog Sheet
+function logPass(doctorName, action, reason) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(PASS_LOG_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(PASS_LOG_SHEET);
+    sheet.getRange("A1:D1").setValues([["Timestamp", "แพทย์", "Action", "เหตุผล"]]);
+    sheet.getRange("A1:D1").setFontWeight("bold").setBackground("#FF9800").setFontColor("white");
+  }
+  
+  const timestamp = new Date();
+  sheet.appendRow([timestamp, doctorName, action, reason || ""]);
+  const lastRow = sheet.getLastRow();
+  sheet.getRange(lastRow, 1).setNumberFormat("dd/MM/yyyy HH:mm");
+  
+  const color = (action === "Pass" || action === "PassCase") ? "#FFEBEE" : "#E8F5E9";
+  sheet.getRange(lastRow, 1, 1, 4).setBackground(color);
+}
+
+// Pass แพทย์ — เปลี่ยนสถานะเป็น "Pass" ข้ามคิวชั่วคราว
+function passDoctor(doctorName, reason) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(DOCTORS_SHEET);
+  const data = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][1] === doctorName && data[i][2] === "Active") {
+      sheet.getRange(i + 1, 3).setValue("Pass");
+      sheet.getRange(i + 1, 1, 1, 3).setBackground("#FFEBEE");
+      logPass(doctorName, "Pass", reason);
+      return { success: true, doctor: doctorName, action: "Pass", reason: reason };
+    }
+  }
+  return { success: false, error: "ไม่พบแพทย์ หรือแพทย์ไม่ได้อยู่ในสถานะ Active" };
+}
+
+// ดึงแพทย์กลับเข้าคิว — เปลี่ยนสถานะกลับเป็น "Active"
+function returnDoctor(doctorName, reason) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(DOCTORS_SHEET);
+  const data = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][1] === doctorName && data[i][2] === "Pass") {
+      sheet.getRange(i + 1, 3).setValue("Active");
+      sheet.getRange(i + 1, 1, 1, 3).setBackground(null);
+      logPass(doctorName, "Return", reason || "กลับเข้าคิว");
+      return { success: true, doctor: doctorName, action: "Return" };
+    }
+  }
+  return { success: false, error: "ไม่พบแพทย์ หรือแพทย์ไม่ได้อยู่ในสถานะ Pass" };
+}
+
+// ดึงรายชื่อแพทย์ที่ถูก Pass อยู่
+function getPassedDoctors() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(DOCTORS_SHEET);
+  const data = sheet.getDataRange().getValues();
+  
+  const passed = [];
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][2] === "Pass") {
+      passed.push({
+        order: data[i][0],
+        name: data[i][1],
+        status: data[i][2]
+      });
+    }
+  }
+  return passed;
+}
+
+// ดึงประวัติ Pass ทั้งหมด (หรือเฉพาะแพทย์คนใดคนหนึ่ง)
+function getPassHistory(doctorName) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(PASS_LOG_SHEET);
+  if (!sheet) return [];
+  
+  const data = sheet.getDataRange().getValues();
+  const history = [];
+  for (let i = 1; i < data.length; i++) {
+    if (!doctorName || data[i][1] === doctorName) {
+      history.push({
+        timestamp: data[i][0] ? Utilities.formatDate(new Date(data[i][0]), "Asia/Bangkok", "dd/MM/yyyy HH:mm") : "",
+        doctor: data[i][1],
+        action: data[i][2],
+        reason: data[i][3] || ""
+      });
+    }
+  }
+  return history;
+}
+
+// ============================================
+// 18) Pass Case เฉพาะเคส — โอน Case ไปแพทย์คนถัดไป
+// ============================================
+function passCaseAtRow(row, reason) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(CASES_SHEET);
+  
+  const currentDoctor = sheet.getRange(row, 5).getValue();
+  if (!currentDoctor) return { success: false, error: "แถวนี้ยังไม่มีแพทย์รับ Case" };
+  
+  const doctors = getActiveDoctors();
+  const counts = getCaseCounts();
+  
+  // ตัดแพทย์ปัจจุบันออก แล้วหาคนที่ case น้อยที่สุดในที่เหลือ
+  const availableDoctors = doctors.filter(d => d.name !== currentDoctor);
+  if (availableDoctors.length === 0) return { success: false, error: "ไม่มีแพทย์ท่านอื่นรับ Case ได้" };
+  
+  let minCount = Infinity;
+  availableDoctors.forEach(doc => {
+    const count = counts[doc.name] || 0;
+    if (count < minCount) minCount = count;
+  });
+  
+  let newDoctor = availableDoctors[0].name;
+  for (const doc of availableDoctors) {
+    if ((counts[doc.name] || 0) === minCount) {
+      newDoctor = doc.name;
+      break;
+    }
+  }
+  
+  // อัปเดต Case
+  sheet.getRange(row, 5).setValue(newDoctor);
+  
+  const existingNote = sheet.getRange(row, 7).getValue();
+  const passNote = "[Pass จาก " + currentDoctor + ": " + (reason || "ไม่ระบุเหตุผล") + "]";
+  sheet.getRange(row, 7).setValue(existingNote ? existingNote + " " + passNote : passNote);
+  
+  highlightRow(sheet, row, newDoctor);
+  logPass(currentDoctor, "PassCase", "Case แถว " + row + ": " + (reason || "ไม่ระบุ") + " → " + newDoctor);
+  
+  return {
+    success: true,
+    row: row,
+    fromDoctor: currentDoctor,
+    toDoctor: newDoctor,
+    reason: reason
+  };
+}
+
+// ============================================
+// 19) เมนู UI สำหรับระบบ Pass
+// ============================================
+
+// Pass แพทย์ผ่านเมนู
+function passDoctorFromMenu() {
+  const ui = SpreadsheetApp.getUi();
+  const doctors = getActiveDoctors();
+  
+  if (doctors.length === 0) {
+    ui.alert("ไม่มีแพทย์ Active ในระบบ");
+    return;
+  }
+  
+  const names = doctors.map((d, i) => (i + 1) + ". " + d.name).join("\n");
+  const response = ui.prompt(
+    "⏭️ Pass แพทย์ — ข้ามคิวชั่วคราว",
+    "แพทย์ที่ Active อยู่:\n" + names + "\n\nพิมพ์ชื่อแพทย์ที่ต้องการ Pass:",
+    ui.ButtonSet.OK_CANCEL
+  );
+  
+  if (response.getSelectedButton() !== ui.Button.OK) return;
+  const doctorName = response.getResponseText().trim();
+  
+  const reasonResponse = ui.prompt(
+    "📝 เหตุผลที่ Pass",
+    doctorName + " ขอ Pass เพราะ:",
+    ui.ButtonSet.OK_CANCEL
+  );
+  
+  if (reasonResponse.getSelectedButton() !== ui.Button.OK) return;
+  const reason = reasonResponse.getResponseText().trim();
+  
+  const result = passDoctor(doctorName, reason);
+  if (result.success) {
+    ui.alert("✅ Pass " + doctorName + " เรียบร้อย!\n\nเหตุผล: " + reason + "\n\n📌 แพทย์ท่านนี้จะถูกข้ามไปจนกว่าจะกด「ดึงกลับเข้าคิว」");
+  } else {
+    ui.alert("❌ " + result.error);
+  }
+}
+
+// ดึงแพทย์กลับเข้าคิวผ่านเมนู
+function returnDoctorFromMenu() {
+  const ui = SpreadsheetApp.getUi();
+  const passed = getPassedDoctors();
+  
+  if (passed.length === 0) {
+    ui.alert("✅ ไม่มีแพทย์ที่ถูก Pass อยู่ในตอนนี้");
+    return;
+  }
+  
+  const names = passed.map((d, i) => (i + 1) + ". " + d.name).join("\n");
+  const response = ui.prompt(
+    "↩️ ดึงแพทย์กลับเข้าคิว",
+    "แพทย์ที่ถูก Pass อยู่:\n" + names + "\n\nพิมพ์ชื่อแพทย์ที่ต้องการดึงกลับ:",
+    ui.ButtonSet.OK_CANCEL
+  );
+  
+  if (response.getSelectedButton() !== ui.Button.OK) return;
+  const doctorName = response.getResponseText().trim();
+  
+  const reasonResponse = ui.prompt(
+    "📝 เหตุผลกลับเข้าคิว",
+    doctorName + " กลับเข้าคิวเพราะ:",
+    ui.ButtonSet.OK_CANCEL
+  );
+  
+  if (reasonResponse.getSelectedButton() !== ui.Button.OK) return;
+  const returnReason = reasonResponse.getResponseText().trim() || "พร้อมกลับเข้าคิว";
+  
+  const result = returnDoctor(doctorName, returnReason);
+  if (result.success) {
+    ui.alert("✅ ดึง " + doctorName + " กลับเข้าคิวเรียบร้อย!\nเหตุผล: " + returnReason + "\n\n📌 แพทย์ท่านนี้จะกลับเข้าลำดับคิวตามปกติ");
+  } else {
+    ui.alert("❌ " + result.error);
+  }
+}
+
+// Pass Case เฉพาะเคสผ่านเมนู (เลือกแถวใน Cases Sheet ก่อน)
+function passCaseFromMenu() {
+  const ui = SpreadsheetApp.getUi();
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  
+  if (sheet.getName() !== CASES_SHEET) {
+    ui.alert("กรุณาเลือก Sheet 'Cases' ก่อนค่ะ");
+    return;
+  }
+  
+  const row = sheet.getActiveRange().getRow();
+  if (row <= 1) {
+    ui.alert("กรุณาเลือกแถว Case ที่ต้องการ Pass");
+    return;
+  }
+  
+  const currentDoctor = sheet.getRange(row, 5).getValue();
+  const hn = sheet.getRange(row, 2).getValue();
+  
+  if (!currentDoctor) {
+    ui.alert("แถวนี้ยังไม่มีแพทย์รับ Case");
+    return;
+  }
+  
+  const response = ui.prompt(
+    "⏭️ Pass Case นี้ไปแพทย์คนถัดไป",
+    "Case HN: " + maskHN(hn) + "\nแพทย์ปัจจุบัน: " + currentDoctor + "\n\nเหตุผลที่ Pass:",
+    ui.ButtonSet.OK_CANCEL
+  );
+  
+  if (response.getSelectedButton() !== ui.Button.OK) return;
+  const reason = response.getResponseText().trim();
+  
+  const result = passCaseAtRow(row, reason);
+  if (result.success) {
+    ui.alert("✅ Pass Case เรียบร้อย!\n\nจาก: " + result.fromDoctor + "\nไปยัง: " + result.toDoctor + "\nเหตุผล: " + reason);
+  } else {
+    ui.alert("❌ " + result.error);
+  }
+}
+
+// แสดงสถานะ Pass ปัจจุบันและประวัติ
+function showPassStatusDialog() {
+  const passed = getPassedDoctors();
+  const history = getPassHistory();
+  
+  let html = '<div style="font-family: Sarabun, sans-serif; padding: 16px;">';
+  html += '<h2 style="color: #FF6F00;">⏭️ สถานะ Pass แพทย์</h2>';
+  
+  if (passed.length === 0) {
+    html += '<p style="color: #4CAF50; font-size: 16px;">✅ ไม่มีแพทย์ที่ถูก Pass อยู่ในตอนนี้</p>';
+  } else {
+    html += '<h3>🔴 แพทย์ที่ถูก Pass อยู่:</h3><ul style="font-size: 15px;">';
+    passed.forEach(function(d) {
+      html += '<li><strong>' + d.name + '</strong></li>';
+    });
+    html += '</ul>';
+  }
+  
+  var recentHistory = history.slice(-10).reverse();
+  if (recentHistory.length > 0) {
+    html += '<h3>📋 ประวัติ Pass ล่าสุด</h3>';
+    html += '<table border="1" cellpadding="6" style="border-collapse: collapse; width: 100%; font-size: 13px;">';
+    html += '<tr style="background: #FF9800; color: white;"><th>เวลา</th><th>แพทย์</th><th>Action</th><th>เหตุผล</th></tr>';
+    recentHistory.forEach(function(h) {
+      var bg = (h.action === "Pass" || h.action === "PassCase") ? "#FFEBEE" : "#E8F5E9";
+      var actionText = h.action === "Pass" ? "⏭️ Pass" : (h.action === "Return" ? "↩️ กลับ" : "🔄 PassCase");
+      html += '<tr style="background: ' + bg + ';"><td>' + h.timestamp + '</td><td>' + h.doctor + '</td><td>' + actionText + '</td><td>' + h.reason + '</td></tr>';
+    });
+    html += '</table>';
+  }
+  
+  html += '</div>';
+  
+  var ui = HtmlService.createHtmlOutput(html).setWidth(540).setHeight(480);
+  SpreadsheetApp.getUi().showModalDialog(ui, "⏭️ สถานะ Pass แพทย์");
+}
+
+// ============================================
+// 20) Form API: จัดการ Pass/Return จากหน้าเว็บ
+// ============================================
+function handlePassDoctor(payload) {
+  if (!verifySession(payload.token)) {
+    return { error: "Session หมดอายุ กรุณา Login ใหม่" };
+  }
+  var doctorName = payload.doctor;
+  var reason = payload.reason || "";
+  if (!doctorName) return { error: "กรุณาระบุชื่อแพทย์" };
+  return passDoctor(doctorName, reason);
+}
+
+function handleReturnDoctor(payload) {
+  if (!verifySession(payload.token)) {
+    return { error: "Session หมดอายุ กรุณา Login ใหม่" };
+  }
+  var doctorName = payload.doctor;
+  var reason = payload.reason || "กลับเข้าคิว";
+  if (!doctorName) return { error: "กรุณาระบุชื่อแพทย์" };
+  return returnDoctor(doctorName, reason);
+}
+
+function handlePassStatus(payload) {
+  if (!verifySession(payload.token)) {
+    return { error: "Session หมดอายุ กรุณา Login ใหม่" };
+  }
+  return {
+    passedDoctors: getPassedDoctors(),
+    passHistory: getPassHistory().slice(-20).reverse()
+  };
 }
