@@ -941,8 +941,9 @@
       const url = new URL(base);
       url.searchParams.set('page', 'api');
       url.searchParams.set('payload', JSON.stringify(payload));
+      url.searchParams.set('_t', Date.now());
 
-      const resp = await fetch(url.toString());
+      const resp = await fetch(url.toString(), { cache: 'no-store' });
       return await resp.json();
     }
   </script>

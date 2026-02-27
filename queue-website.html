@@ -722,9 +722,10 @@
         url.searchParams.set('token', INTERNAL_TOKEN);
       }
       Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+      url.searchParams.set('_t', Date.now());
 
       try {
-        const resp = await fetch(url.toString());
+        const resp = await fetch(url.toString(), { cache: 'no-store' });
         return await resp.json();
       } catch (err) {
         console.error('API Error:', err);

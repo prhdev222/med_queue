@@ -25,12 +25,17 @@ export default async function handler(req, res) {
     return;
   }
 
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+
   try {
     const url = new URL(APPSCRIPT_URL);
     Object.entries(req.query || {}).forEach(([k, v]) => {
+      if (k === '_t') return;
       if (v !== undefined && v !== '') url.searchParams.set(k, v);
     });
-    const response = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+    url.searchParams.set('_t', Date.now());
+    const response = await fetch(url.toString(), { headers: { Accept: 'application/json' }, cache: 'no-store' });
     const data = await response.json();
     res.status(200).json(data);
   } catch (err) {
