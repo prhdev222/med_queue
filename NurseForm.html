@@ -569,7 +569,6 @@
           }
           showScreen('formScreen');
           loadQueuePreview();
-          startAutoRefresh();
         } else {
           document.getElementById('loginError').classList.add('show');
         }
@@ -905,15 +904,6 @@
 
       btn.classList.remove('loading');
       btn.disabled = false;
-    }
-
-    let nurseAutoRefresh = null;
-
-    function startAutoRefresh() {
-      if (nurseAutoRefresh) clearInterval(nurseAutoRefresh);
-      nurseAutoRefresh = setInterval(() => {
-        loadQueuePreview();
-      }, 30000);
     }
 
     function backToForm() {

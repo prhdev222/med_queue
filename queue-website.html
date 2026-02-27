@@ -899,7 +899,7 @@
             รีเฟรช
           </button>
           <p>อัปเดตล่าสุด: ${new Date(d.timestamp).toLocaleString('th-TH')}</p>
-          <p style="margin-top:4px">Auto-refresh ทุก 2 นาที</p>
+          <p style="margin-top:4px">กดเพื่ออัปเดตข้อมูลล่าสุด</p>
           <p class="footer-credit">© 2026 directed by <a href="mailto:Uradev222@gmail.com">Uradev</a></p>
           <p class="footer-tagline">สร้างด้วยใจ เพื่อแผนกอายุรกรรม รักและสามัคคีกัน</p>
         </div>`;
@@ -922,10 +922,7 @@
     isInternalMode = !!INTERNAL_TOKEN;
     loadData();
 
-    // Auto refresh every 30 seconds
-    autoRefreshInterval = setInterval(() => {
-      loadData();
-    }, 30000);
+    // Manual refresh only (กดปุ่ม Refresh เอง)
   </script>
 </body>
 </html>
