@@ -1,3 +1,6 @@
+# Google Apps Script (ไม่ push backend logic)
+code.gs
+
 # Env (ไม่ push รหัส/URL จริง)
 .env
 .env.local
